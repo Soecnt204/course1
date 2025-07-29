@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .login-form, .admin-section {
+            margin-bottom: 40px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        select {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .btn-danger {
+            background: #e74c3c;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-success {
+            background: #27ae60;
+        }
+        .btn-success:hover {
+            background: #229954;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        .folder-item, .video-item, .material-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+            position: relative;
+        }
+        .video-item {
+            border-left-color: #27ae60;
+        }
+        .material-item {
+            border-left-color: #f39c12;
+        }
+        .subfolder-item {
+            border-left-color: #9b59b6;
+        }
+        .folder-level-indicator {
+            position: absolute;
+            left: -4px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: repeating-linear-gradient(
+                to bottom,
+                #9b59b6 0px,
+                #9b59b6 10px,
+                transparent 10px,
+                transparent 20px
+            );
+        }
+        .item-actions {
+            margin-top: 10px;
+        }
+        .item-actions button {
+            width: auto;
+            margin-right: 10px;
+            padding: 5px 15px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+        .success {
+            color: #27ae60;
+            margin-top: 10px;
+        }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: auto;
+            padding: 8px 16px;
+            background: #95a5a6;
+        }
+        .logout-btn:hover {
+            background: #7f8c8d;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #ecf0f1;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .bulk-help {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .bulk-help h4 {
+            margin: 0 0 10px 0;
+            color: #0c5460;
+        }
+        .bulk-help code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .progress-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .folder-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .folder-tab {
+            padding: 8px 16px;
+            background: #ecf0f1;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            font-size: 14px;
+        }
+        .folder-tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .folder-tab-content {
+            display: none;
+        }
+        .folder-tab-content.active {
+            display: block;
+        }
+        
+        /* Enhanced folder creation section */
+        .folder-creation-help {
+            background: #f0f8ff;
+            border: 1px solid #b6d7ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .folder-creation-help h4 {
+            margin: 0 0 10px 0;
+            color: #1e40af;
+        }
+        .folder-creation-help ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+        
+        /* Better dropdown styling */
+        .folder-select {
+            font-family: monospace;
+            background: white;
+        }
+        .folder-select option {
+            padding: 5px;
+        }
+        .folder-select option[data-level="0"] {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .folder-select option[data-level="1"] {
+            color: #7f8c8d;
+        }
+        .folder-select option[data-level="2"] {
+            color: #95a5a6;
+        }
+        
+        /* Content management enhancements */
+        .content-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .content-stats {
+            background: #ecf0f1;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        /* Collapsible folders */
+        .folder-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+        .folder-children {
+            margin-left: 20px;
+        }
+        .folder-children.collapsed {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 20px; }
+            .logout-btn { position: static; margin-bottom: 20px; }
+            .tabs { flex-direction: column; }
+            .tab { margin-bottom: 5px; }
+            .folder-tabs { flex-direction: column; }
+            .folder-tab { margin-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Form -->
+    <div id="loginSection" class="container">
+        <h1>Admin Login</h1>
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">Login</button>
+            <div id="loginError" class="error hidden"></div>
+        </form>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminSection" class="container hidden">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        
+        <h1>Admin Dashboard</h1>
+        <div id="dashboardStats" class="content-stats">Loading statistics...</div>
+        
+        <!-- Create Folder Section -->
+        <div class="admin-section">
+            <h2>📁 Create New Folder</h2>
+            
+            <div class="folder-creation-help">
+                <h4>💡 Folder Creation Guide</h4>
+                <ul>
+                    <li><strong>Main Folder:</strong> Creates a top-level folder (e.g., "Course 1", "Module A")</li>
+                    <li><strong>Subfolder:</strong> Creates a folder inside any existing folder - unlimited nesting supported!</li>
+                    <li><strong>Examples:</strong> Course → Chapter → Lesson → Exercises</li>
+                </ul>
+            </div>
+            
+            <!-- Folder Creation Tabs -->
+            <div class="folder-tabs">
+                <button class="folder-tab active" onclick="switchFolderTab('main')">🏠 Main Folder</button>
+                <button class="folder-tab" onclick="switchFolderTab('sub')">📂 Subfolder</button>
+            </div>
+            
+            <!-- Main Folder Creation -->
+            <div id="mainFolderTab" class="folder-tab-content active">
+                <form id="createFolderForm">
+                    <div class="form-group">
+                        <label for="folderName">Main Folder Name:</label>
+                        <input type="text" id="folderName" required placeholder="e.g., Marketing Course, Module 1, etc.">
+                        <div class="help-text">This will be a top-level folder visible on the main page</div>
+                    </div>
+                    <button type="submit" class="btn-success">Create Main Folder</button>
+                    <div id="folderMessage" class="hidden"></div>
+                </form>
+            </div>
+            
+            <!-- Subfolder Creation -->
+            <div id="subFolderTab" class="folder-tab-content">
+                <form id="createSubfolderForm">
+                    <div class="form-group">
+                        <label for="parentFolder">Select Parent Folder:</label>
+                        <select id="parentFolder" class="folder-select" required>
+                            <option value="">Select a parent folder...</option>
+                        </select>
+                        <div class="help-text">You can select ANY folder as a parent - create unlimited nested levels!</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subfolderName">Subfolder Name:</label>
+                        <input type="text" id="subfolderName" required placeholder="e.g., Chapter 1, Exercises, Resources, etc.">
+                        <div class="help-text">This folder will be created inside the selected parent folder</div>
+                    </div>
+                    <button type="submit" class="btn-success">Create Subfolder</button>
+                    <div id="subfolderMessage" class="hidden"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Content Section -->
+        <div class="admin-section">
+            <h2>📚 Add Content</h2>
+            
+            <!-- Tabs for Video/Material -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('video')">🎥 Add Videos (Bulk)</button>
+                <button class="tab" onclick="switchTab('material')">📄 Add Course Material</button>
+            </div>
+            
+            <!-- Add Video Tab -->
+            <div id="videoTab" class="tab-content active">
+                <div class="bulk-help">
+                    <h4>📹 Bulk Video Upload</h4>
+                    <p>Paste multiple videos in this format (one per line):</p>
+                    <code>Video Title | Video URL</code>
+                    <br><br>
+                    <strong>Example:</strong><br>
+                    <code>01-Bonus Module 1- The Rules About Supplement Copy Compliance.mp4 | https://short.icu/ZjMJ_3C1V</code><br>
+                    <code>02-Introduction to Marketing.mp4 | https://youtube.com/watch?v=abc123</code><br>
+                    <code>03-Advanced Techniques.mp4 | https://drive.google.com/file/d/xyz789</code>
+                </div>
+                
+                <form id="addVideoForm">
+                    <div class="form-group">
+                        <label for="videoFolder">Select Destination Folder:</label>
+                        <select id="videoFolder" class="folder-select" required>
+                            <option value="">Select a folder...</option>
+                        </select>
+                        <div class="help-text">Choose any folder (including nested subfolders) to add videos</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="videoBulkData">Videos (Title | URL format):</label>
+                        <textarea id="videoBulkData" required placeholder="01-Video Title.mp4 | https://example.com/video1
+02-Another Video.mp4 | https://example.com/video2
+03-Third Video.mp4 | https://example.com/video3"></textarea>
+                        <div class="help-text">Each line should contain: Video Title | Video URL</div>
+                    </div>
+                    <button type="submit" class="btn-success">Add All Videos</button>
+                    <div id="videoMessage" class="hidden"></div>
+                </form>
+            </div>
+            
+            <!-- Add Material Tab -->
+            <div id="materialTab" class="tab-content">
+                <form id="addMaterialForm">
+                    <div class="form-group">
+                        <label for="materialFolder">Select Destination Folder:</label>
+                        <select id="materialFolder" class="folder-select" required>
+                            <option value="">Select a folder...</option>
+                        </select>
+                        <div class="help-text">Choose any folder (including nested subfolders) to add materials</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="materialTitle">Material Title:</label>
+                        <input type="text" id="materialTitle" required placeholder="e.g., Course Handbook, Exercise Sheet, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label for="materialType">Material Type:</label>
+                        <select id="materialType" required>
+                            <option value="">Select type...</option>
+                            <option value="pdf">📄 PDF Document</option>
+                            <option value="document">📝 Word Document</option>
+                            <option value="spreadsheet">📊 Spreadsheet</option>
+                            <option value="presentation">📈 Presentation</option>
+                            <option value="archive">📦 Archive/ZIP</option>
+                            <option value="tool">🔧 Tool/Software Link</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="materialUrl">Material URL:</label>
+                        <input type="url" id="materialUrl" required placeholder="https://drive.google.com/file/d/...">
+                        <div class="help-text">Supported: Google Drive, OneDrive, Mega, iDrive, Dropbox, Direct download links</div>
+                    </div>
+                    <button type="submit" class="btn-success">Add Material</button>
+                    <div id="materialMessage" class="hidden"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manage Content Section -->
+        <div class="admin-section">
+            <div class="content-header">
+                <h2>🗂️ Manage Content</h2>
+                <button onclick="toggleAllFolders()" class="btn-secondary" id="toggleAllBtn">Collapse All</button>
+            </div>
+            <div id="contentList">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/admin.js"></script>
+    
+    <script>
+        // Global state for folder expansion
+        let foldersExpanded = true;
+        
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            if (tabName === 'video') {
+                document.getElementById('videoTab').classList.add('active');
+                document.querySelector('[onclick="switchTab(\'video\')"]').classList.add('active');
+            } else if (tabName === 'material') {
+                document.getElementById('materialTab').classList.add('active');
+                document.querySelector('[onclick="switchTab(\'material\')"]').classList.add('active');
+                
+                // Reload folders when switching to material tab (fix for dropdown issue)
+                setTimeout(() => {
+                    loadFolders();
+                }, 100);
+            }
+        }
+        
+        function switchFolderTab(tabName) {
+            // Hide all folder tabs
+            document.querySelectorAll('.folder-tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.folder-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            if (tabName === 'main') {
+                document.getElementById('mainFolderTab').classList.add('active');
+                document.querySelector('[onclick="switchFolderTab(\'main\')"]').classList.add('active');
+            } else if (tabName === 'sub') {
+                document.getElementById('subFolderTab').classList.add('active');
+                document.querySelector('[onclick="switchFolderTab(\'sub\')"]').classList.add('active');
+                
+                // Load parent folders when switching to subfolder tab
+                setTimeout(() => {
+                    loadParentFolders();
+                }, 100);
+            }
+        }
+        
+        // Toggle all folders expanded/collapsed
+        function toggleAllFolders() {
+            const button = document.getElementById('toggleAllBtn');
+            const folderChildren = document.querySelectorAll('.folder-children');
+            
+            if (foldersExpanded) {
+                // Collapse all
+                folderChildren.forEach(child => child.classList.add('collapsed'));
+                button.textContent = 'Expand All';
+                foldersExpanded = false;
+            } else {
+                // Expand all
+                folderChildren.forEach(child => child.classList.remove('collapsed'));
+                button.textContent = 'Collapse All';
+                foldersExpanded = true;
+            }
+        }
+        
+        // Toggle individual folder
+        function toggleFolder(folderId) {
+            const children = document.getElementById(`children-${folderId}`);
+            const toggle = document.getElementById(`toggle-${folderId}`);
+            
+            if (children && toggle) {
+                if (children.classList.contains('collapsed')) {
+                    children.classList.remove('collapsed');
+                    toggle.textContent = '🔽';
+                } else {
+                    children.classList.add('collapsed');
+                    toggle.textContent = '▶️';
+                }
+            }
+        }
+        
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const [foldersSnapshot, videosSnapshot, materialsSnapshot] = await Promise.all([
+                    db.collection('folders').get(),
+                    db.collection('videos').get(),
+                    db.collection('materials').get()
+                ]);
+                
+                const folderCount = foldersSnapshot.size;
+                const videoCount = videosSnapshot.size;
+                const materialCount = materialsSnapshot.size;
+                
+                // Calculate nesting levels
+                let maxLevel = 0;
+                const folders = [];
+                foldersSnapshot.forEach(doc => {
+                    folders.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Calculate max nesting level
+                function calculateLevel(folderId, folders, visited = new Set()) {
+                    if (visited.has(folderId)) return 0; // Prevent infinite recursion
+                    visited.add(folderId);
+                    
+                    const folder = folders.find(f => f.id === folderId);
+                    if (!folder || !folder.parentId) return 0;
+                    
+                    return 1 + calculateLevel(folder.parentId, folders, visited);
+                }
+                
+                folders.forEach(folder => {
+                    const level = calculateLevel(folder.id, folders);
+                    maxLevel = Math.max(maxLevel, level);
+                });
+                
+                document.getElementById('dashboardStats').innerHTML = `
+                    📊 <strong>Content Statistics:</strong> 
+                    ${folderCount} folders • ${videoCount} videos • ${materialCount} materials • 
+                    Max nesting level: ${maxLevel + 1}
+                `;
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                document.getElementById('dashboardStats').textContent = 'Unable to load statistics';
+            }
+        }
+        
+        // Override the showAdminDashboard function to include stats loading
+        const originalShowAdminDashboard = window.showAdminDashboard;
+        window.showAdminDashboard = async function() {
+            if (originalShowAdminDashboard) {
+                await originalShowAdminDashboard();
+            }
+            await loadDashboardStats();
+        };
+    </script>
+</body>
+</html>

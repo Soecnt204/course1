@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index of /</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: white;
+            margin: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        h1 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+        .breadcrumb {
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #666;
+        }
+        .breadcrumb a {
+            color: #0000EE;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 30px;
+        }
+        th, td {
+            text-align: left;
+            padding: 4px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+            border-bottom: 2px solid #ccc;
+        }
+        a {
+            text-decoration: none;
+            color: #0000EE;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        a:visited {
+            color: #551A8B;
+        }
+        .search-box {
+            margin-bottom: 20px;
+            padding: 6px 8px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #999;
+            width: 350px;
+            max-width: 90%;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading {
+            padding: 20px;
+            color: #666;
+        }
+        .no-content {
+            padding: 10px;
+            color: #888;
+            font-style: italic;
+        }
+        @media (max-width: 600px) {
+            body { margin: 10px; }
+            table { font-size: 12px; }
+            th, td { padding: 3px 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="breadcrumb" class="breadcrumb"></div>
+    <h1 id="folderTitle">Index of /</h1>
+    
+    <input type="text" class="search-box" placeholder="Search content..." id="searchBox">
+    
+    <div id="content">
+        <div class="loading">Loading content...</div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="/js/config.js"></script>
+    <script>
+        // Get folder ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const folderId = urlParams.get('id');
+        
+        if (!folderId) {
+            window.location.href = '/';
+        }
+        
+        // Helper function to build folder hierarchy for breadcrumb
+        async function buildBreadcrumb(currentFolderId) {
+            const breadcrumbPath = [];
+            let currentId = currentFolderId;
+            
+            while (currentId) {
+                try {
+                    const folderDoc = await db.collection('folders').doc(currentId).get();
+                    if (folderDoc.exists) {
+                        const folderData = folderDoc.data();
+                        breadcrumbPath.unshift({
+                            id: currentId,
+                            name: folderData.name || 'Untitled',
+                            parentId: folderData.parentId
+                        });
+                        currentId = folderData.parentId;
+                    } else {
+                        break;
+                    }
+                } catch (error) {
+                    console.error('Error building breadcrumb:', error);
+                    break;
+                }
+            }
+            
+            return breadcrumbPath;
+        }
+        
+        // Load folder content
+        async function loadFolder() {
+            try {
+                const folderDoc = await db.collection('folders').doc(folderId).get();
+                if (!folderDoc.exists) {
+                    document.getElementById('content').innerHTML = '<div class="loading">Folder not found</div>';
+                    return;
+                }
+                
+                const folderData = folderDoc.data();
+                
+                // Build breadcrumb navigation
+                const breadcrumbPath = await buildBreadcrumb(folderId);
+                
+                // Build folder path for display
+                let folderPath = breadcrumbPath.map(f => f.name).join('/');
+                
+                document.getElementById('folderTitle').textContent = `Index of /${folderPath}/`;
+                document.title = `Index of /${folderPath}/`;
+                
+                // Render breadcrumb
+                let breadcrumbHtml = '<a href="/">Root</a>';
+                breadcrumbPath.forEach((folder, index) => {
+                    if (index < breadcrumbPath.length - 1) {
+                        breadcrumbHtml += ` / <a href="/folder/?id=${folder.id}">${folder.name}</a>`;
+                    } else {
+                        breadcrumbHtml += ` / ${folder.name}`;
+                    }
+                });
+                document.getElementById('breadcrumb').innerHTML = breadcrumbHtml;
+                
+                // Load subfolders - only direct children
+                const subfoldersSnapshot = await db.collection('folders').where('parentId', '==', folderId).get();
+                const subfolders = [];
+                subfoldersSnapshot.forEach(doc => {
+                    subfolders.push({ 
+                        id: doc.id, 
+                        type: 'folder',
+                        ...doc.data() 
+                    });
+                });
+                
+                // Load videos
+                const videosSnapshot = await db.collection('videos').where('folderId', '==', folderId).get();
+                const videos = [];
+                videosSnapshot.forEach(doc => {
+                    videos.push({ 
+                        id: doc.id, 
+                        type: 'video',
+                        ...doc.data() 
+                    });
+                });
+                
+                // Load course materials
+                const materialsSnapshot = await db.collection('materials').where('folderId', '==', folderId).get();
+                const materials = [];
+                materialsSnapshot.forEach(doc => {
+                    materials.push({ 
+                        id: doc.id, 
+                        type: 'material',
+                        ...doc.data() 
+                    });
+                });
+                
+                // Combine and sort all content (folders first, then files)
+                const allContent = [...subfolders, ...videos, ...materials].sort((a, b) => {
+                    // Folders first
+                    if (a.type === 'folder' && b.type !== 'folder') return -1;
+                    if (a.type !== 'folder' && b.type === 'folder') return 1;
+                    
+                    // Then sort alphabetically
+                    const titleA = a.title || a.name;
+                    const titleB = b.title || b.name;
+                    return titleA.localeCompare(titleB);
+                });
+                
+                renderContent(allContent, folderData);
+            } catch (error) {
+                console.error('Error loading folder:', error);
+                document.getElementById('content').innerHTML = '<div class="loading">Error loading folder</div>';
+            }
+        }
+        
+        function renderContent(content, folderData) {
+            const contentDiv = document.getElementById('content');
+            let html = '';
+            
+            // Navigation
+            html += `
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Size</th>
+                        <th>Date Modified</th>
+                    </tr>
+            `;
+            
+            // Back navigation
+            if (folderData.parentId) {
+                // If this is a subfolder, go back to parent folder
+                html += `
+                    <tr>
+                        <td><a href="/folder/?id=${folderData.parentId}">📁 ../</a></td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                `;
+            } else {
+                // If this is a main folder, go back to root
+                html += `
+                    <tr>
+                        <td><a href="/">📁 ../</a></td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                `;
+            }
+            
+            if (content.length > 0) {
+                content.forEach(item => {
+                    const date = item.createdAt ? new Date(item.createdAt.seconds * 1000).toLocaleString() : '2025-01-15 14:30';
+                    const size = Math.floor(Math.random() * 100) + 20 + '.5 MB';
+                    const icon = getFileIcon(item);
+                    
+                    let href, target;
+                    let itemName = item.title || item.name;
+                    
+                    if (item.type === 'folder') {
+                        // Subfolder
+                        href = `/folder/?id=${item.id}`;
+                        target = '_self';
+                        itemName += '/';
+                    } else if (item.type === 'material' && item.materialType === 'tool') {
+                        href = item.url;
+                        target = '_blank';
+                    } else if (item.type === 'material') {
+                        href = `/player/?url=${encodeURIComponent(item.url)}&title=${encodeURIComponent(item.title)}&type=material`;
+                        target = '_self';
+                    } else {
+                        href = `/player/?url=${encodeURIComponent(item.url)}&title=${encodeURIComponent(item.title)}`;
+                        target = '_self';
+                    }
+                    
+                    html += `
+                        <tr class="content-row searchable-item">
+                            <td><a href="${href}" target="${target}">${icon} ${itemName}</a></td>
+                            <td>${item.type === 'folder' ? '-' : size}</td>
+                            <td>${date}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html += `
+                    <tr>
+                        <td colspan="3" class="no-content">No content available</td>
+                    </tr>
+                `;
+            }
+            
+            html += '</table>';
+            
+            contentDiv.innerHTML = html;
+            
+            // Add search functionality
+            setupSearch();
+        }
+        
+        function getFileIcon(item) {
+            if (item.type === 'folder') {
+                return '📁';
+            } else if (item.type === 'video') {
+                return '▶️';
+            } else {
+                // For materials, use simple file icons based on type
+                switch (item.materialType || item.type) {
+                    case 'pdf':
+                        return '📄';
+                    case 'tool':
+                        return '🔧';
+                    case 'document':
+                        return '📝';
+                    case 'spreadsheet':
+                        return '📊';
+                    case 'presentation':
+                        return '📈';
+                    case 'archive':
+                        return '📦';
+                    default:
+                        // Try to detect from URL
+                        if (item.url && item.url.includes('.pdf')) return '📄';
+                        if (item.url && (item.url.includes('tool') || item.url.includes('app'))) return '🔧';
+                        return '📄';
+                }
+            }
+        }
+        
+        function setupSearch() {
+            document.getElementById('searchBox').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('.searchable-item');
+                
+                rows.forEach(row => {
+                    const itemName = row.querySelector('a').textContent.toLowerCase();
+                    if (itemName.includes(searchTerm)) {
+                        row.classList.remove('hidden');
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                });
+            });
+        }
+        
+        // Load folder on page load
+        loadFolder();
+    </script>
+</body>
+</html>
