@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index of /</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: white;
+            margin: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        h1 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px;
+        }
+        th, td {
+            text-align: left;
+            padding: 4px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+            border-bottom: 2px solid #ccc;
+        }
+        a {
+            text-decoration: none;
+            color: #0000EE;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        a:visited {
+            color: #551A8B;
+        }
+        .search-box {
+            margin-bottom: 20px;
+            padding: 6px 8px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #999;
+            width: 350px;
+            max-width: 90%;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading {
+            padding: 20px;
+            color: #666;
+        }
+        .admin-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            body { margin: 10px; }
+            table { font-size: 12px; }
+            th, td { padding: 3px 6px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Index of /</h1>
+    
+    <input type="text" class="search-box" placeholder="Search folders..." id="searchBox">
+    
+    <div id="content">
+        <div class="loading">Loading folders...</div>
+    </div>
+    
+    <a href="/admin/" class="admin-link">Admin</a>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
